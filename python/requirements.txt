@@ -1,0 +1,7 @@
+# ExoHabitability Advisor -- Python GUI dependencies (Phase 11)
+#
+# Requires SWI-Prolog to be installed on the system as well:
+#   macOS:  brew install swi-prolog
+#
+streamlit>=1.30
+pyswip>=0.3.2

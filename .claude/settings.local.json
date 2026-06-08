@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swipl --version)",
+      "Bash(brew install *)",
+      "Bash(mkdir -p prolog python docs && ls -la)",
+      "Bash(swipl -q -g \"\\(is_habitable\\(earth\\) -> writeln\\('QUERY is_habitable\\(earth\\) => true'\\) ; writeln\\('=> false'\\)\\)\" -t halt prolog/test_phase1.pl)",
+      "Bash(swipl -q -g ' *)",
+      "Bash(swipl -q -g \"help, halt\" prolog/main.pl)",
+      "Bash(swipl -q -g consultation -t halt prolog/main.pl)",
+      "Bash(cat /tmp/streamlit_test.log 2>&1 | head -40; echo \"=== end log ===\")",
+      "Read(//private/tmp/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/shakil/Dev/expert-system"
+    ]
+  }
+}
