@@ -22,7 +22,7 @@
 % -----------------------------------------------------------------------------
 % classification(+Planet, ?Class)
 %   Public entry point. We deliberately compute the class into a FRESH unbound
-%   variable (Derived) and only THEN unify it with the caller's Class.
+%   variable (Derived) and only THEN unify it with the callers Class.
 %
 %   Why: the cut-chain in classify/2 only behaves correctly when its 2nd
 %   argument is unbound (mode +,-). If a caller asked classification(earth,
@@ -40,7 +40,7 @@ classification(Planet, Class) :-
 % -----------------------------------------------------------------------------
 classify(P, habitable) :-
     habitable(P),
-    !.                                 % committed: it's fully habitable, stop.
+    !.                                 % committed: its fully habitable, stop.
 
 classify(P, possible_habitable) :-
     in_habitable_zone(P),
