@@ -18,6 +18,7 @@ planets added through the UI persist across Streamlit's script re-runs.
 
 import os
 import re
+import threading
 import streamlit as st
 from pyswip import Prolog
 
@@ -31,6 +32,8 @@ CLASS_COLORS = {
     "terraforming_candidate": "🟠",
     "uninhabitable": "🔴",
 }
+
+PROLOG_LOCK = threading.RLock()
 
 
 # =============================================================================
@@ -51,13 +54,28 @@ def _txt(v):
     return str(v)
 
 
+def _query(prolog, goal, maxresult=-1):
+    """Run a Prolog query, materialise all rows, and always close it.
+
+    PySwip allows only one active query at a time. Streamlit reruns the script
+    often, so every query must be fully consumed and explicitly closed before
+    another query starts.
+    """
+    with PROLOG_LOCK:
+        q = prolog.query(goal, maxresult=maxresult)
+        try:
+            return list(q)
+        finally:
+            q.close()
+
+
 def _has(prolog, goal):
     """True if `goal` has at least one solution."""
-    return bool(list(prolog.query(goal)))
+    return bool(_query(prolog, goal, maxresult=1))
 
 
 def list_planets(prolog):
-    rows = list(prolog.query("planet(P)"))
+    rows = _query(prolog, "planet(P)")
     # preserve definition order, de-duplicate
     seen, out = set(), []
     for r in rows:
@@ -72,7 +90,7 @@ def get_facts(prolog, planet):
     """Return a dict of the ground facts known about `planet`."""
 
     def one(goal, var, default="—"):
-        res = list(prolog.query(goal))
+        res = _query(prolog, goal, maxresult=1)
         return res[0][var] if res else default
 
     return {
@@ -88,22 +106,22 @@ def get_facts(prolog, planet):
 
 
 def classify(prolog, planet):
-    res = list(prolog.query(f"classification({planet}, C), class_label(C, L)"))
+    res = _query(prolog, f"classification({planet}, C), class_label(C, L)", maxresult=1)
     if not res:
         return None, None
     return _txt(res[0]["C"]), _txt(res[0]["L"])
 
 
 def reasons(prolog, planet):
-    return [_txt(r["R"]) for r in prolog.query(f"reason({planet}, R)")]
+    return [_txt(r["R"]) for r in _query(prolog, f"reason({planet}, R)")]
 
 
 def concerns(prolog, planet):
-    return [_txt(r["C"]) for r in prolog.query(f"concern({planet}, C)")]
+    return [_txt(r["C"]) for r in _query(prolog, f"concern({planet}, C)")]
 
 
 def candidates(prolog):
-    res = list(prolog.query("candidate_planets(L)"))
+    res = _query(prolog, "candidate_planets(L)", maxresult=1)
     if not res:
         return []
     return [_txt(x) for x in res[0]["L"]]
@@ -235,7 +253,7 @@ with st.expander("🔍 Run a raw Prolog query"):
     q = st.text_input("Query", value="classification(P, habitable)")
     if st.button("Run query"):
         try:
-            results = list(prolog.query(q))
+            results = _query(prolog, q)
             if not results:
                 st.warning("No solutions (false).")
             else:
